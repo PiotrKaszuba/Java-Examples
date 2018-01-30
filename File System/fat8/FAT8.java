@@ -33,52 +33,10 @@ private byte[] write_buffer;
 private int buffer_length;
 private byte[] write_name;
 
-/*
-
-private int get_FAT_first_addr()
-{
-	return Sector.size;
-}
-
-private int get_FAT_last_addr()
-{
-	return Sector.size*(1+FAT_sectors) -1;
-}
-
-private int get_ROOT_first_addr()
-{
-	return Sector.size*(1+FAT_sectors)+1;
-}
-
-private int get_ROOT_file_first_position(int i)
-{
-	return get_ROOT_first_addr()+dlugosc_wpisu_katalogowego*(i-1);
-}
-
-private int get_ROOT_last_addr()
-{
-	return get_ROOT_file_first_position(ROOT_space)+dlugosc_wpisu_katalogowego-1;
-}
-
-private int get_DATA_first_addr()
-{
-	return Sector.size*(1+FAT_sectors+ROOT_sectors)+1;
-}
-
-private int get_DATA_JAP_first_position(int i)
-{
-	return get_DATA_first_addr()+Sector.size*(i-1);
-}
-
-private int get_DATA_last_addr()
-{
-	return get_DATA_JAP_first_position(disk.getSector_number()-JAP_offset);
-}
 
 
-*/
 
-// sector getters from disk
+// gettery sektorow z dysku
 private byte[] get_FAT_sector_of_JAP(int JAP)
 {
 	if (JAP<1 | JAP>64) return null;
@@ -121,6 +79,9 @@ private byte[] get_DATA_sector(int JAP)
 {
 return disk.send_sector(this.convert_DATA_jap_to_sector_nr(JAP));
 }
+// --------------------------------
+
+
 
 // sector saving to disk
 
@@ -165,14 +126,13 @@ private boolean save_FAT_sector_of_JAP(byte[] sector, int JAP)
 
 private boolean save_DATA_sector(byte[] sector, int JAP)
 {
-	if (JAP+this.JAP_offset>disk.getSector_number() | JAP < 1) return false;
-	disk.get_sector(this.convert_DATA_jap_to_sector_nr(JAP), sector);
+	if (JAP+JAP_offset>disk.getSector_number() | JAP < 1) return false;
+	disk.get_sector(convert_DATA_jap_to_sector_nr(JAP), sector);
     return true;
 }
-
+//--------------------------
 
 // converting sector indexes
-
 
 private int convert_DATA_jap_to_sector_nr(int JAP)
 {
@@ -191,31 +151,34 @@ private int convert_FAT_nr_to_sector_nr(int nr)
 
 private int convert_entry_to_ROOT_nr(int entry)
 {
-	return (entry-1)*dlugosc_wpisu_katalogowego/Sector.size +1;
+	return (entry-1)*dlugosc_wpisu_katalogowego/disk.getSector_size() +1;
 }
 
 private int convert_jap_to_FAT_nr(int JAP)
 {
-	return (JAP-1)/Sector.size +1;
+	return (JAP-1)/disk.getSector_size() +1;
 }
+//-----------------------------------------------
 
-// root entry functions
 
+
+
+
+// funkcje dla wpisow (entry)
+
+//zwraca pierwsza pozycje(bajt) konkretnego wpisu w sektorze w ktorym sie znajduje
 private int get_entry_first_position_in_block(int global_entry)
 {
-	return (global_entry-1)%(Sector.size/dlugosc_wpisu_katalogowego)*dlugosc_wpisu_katalogowego;
+	return (global_entry-1)%(disk.getSector_size()/dlugosc_wpisu_katalogowego)*dlugosc_wpisu_katalogowego;
 }
 
-
+//zwraca bajt na pozycji nr w kolejnym wpisie o numerze entry w danym sektorze
 private byte check_entry_field(byte[] sector, int entry, int nr)
 {
-	return sector[this.dlugosc_wpisu_katalogowego*(entry-1)+nr-1];
+	return sector[dlugosc_wpisu_katalogowego*(entry-1)+nr-1];
 }
 
-//
-
 // ROOT wpis -> 1(atrybut) 0 nieuzyty, 1 skasowany, 2 plik; 8 nazwa; 1 numer pierwszej JAP; 2 rozmiar
-
 // zwraca 0 jezeli plik nie istnieje lub jego pozycje jesli istnieje
 private int file_exists(byte[] name)
 {
@@ -230,7 +193,7 @@ private int file_exists(byte[] name)
 	
 	
 	
-	for (int i=1; i<= Sector.size/dlugosc_wpisu_katalogowego;i++)
+	for (int i=1; i<= disk.getSector_size()/dlugosc_wpisu_katalogowego;i++)
 	{
 		for (int j=2; j<=9; j++)
 			
@@ -264,7 +227,7 @@ private int get_root_space()
 	while(entry <= ROOT_space)
 	{
 		buffer = get_ROOT_sector_of_entry(entry);
-		for (int i=1; i<= Sector.size/dlugosc_wpisu_katalogowego;i++)
+		for (int i=1; i<= disk.getSector_size()/dlugosc_wpisu_katalogowego;i++)
 		{
 			if ( check_entry_field(buffer, i, 1) != 2) 
 			{
@@ -281,7 +244,7 @@ private int get_root_space()
 }
 
 
-// edytuje wpis katalogowy
+// edytuje wpis katalogowy przekazany w parametrze
 // null nie zmienia lub -1
 private byte[] edit_entry(byte[] entry, byte att, byte[] name, byte first_jap, int rozmiar )
 
@@ -352,6 +315,15 @@ private byte[] save_entry_to_block(byte[] sector, byte[] entry, int global_entry
 	return sector;
 }
 
+//----------------------------------------------------
+
+
+
+
+
+//Interfejs klasy - metody uzywane (oprocz wypisan, konwertowan i konstruktora):
+
+
 // tworzy plik o podanej nazwie bez przydzielonego miejsca
 public boolean create_file(String Sname)
 {
@@ -393,9 +365,9 @@ public boolean write_to_file(String Sname, String Stext)
 	{
 		this.write_buffer[buffer_length] = bajty[i];
 		buffer_length++;
-		if (buffer_length==Sector.size) 
+		if (buffer_length==disk.getSector_size()) 
 			{
-			if(!save_file(name, write_buffer, Sector.size)) return false;
+			if(!save_file(name, write_buffer, disk.getSector_size())) return false;
 			buffer_length = 0;
 			}
 	}
@@ -403,7 +375,7 @@ public boolean write_to_file(String Sname, String Stext)
 }
 
 
-//zamyka plik - zapisuje w nim bufor
+//zamyka plik - i odrazu zapisuje w nim bufor - poprawna metoda zapisywania
 public boolean close_file()
 {
 	
@@ -419,7 +391,8 @@ public boolean close_file()
 		}
 }
 
-//usuwa dany plik
+//usuwa dany plik - usuwa jedynie wpis w tablicy FAT 
+//dane pozostaja ale moge zostac zastapione kolejnym plikiem
 public boolean delete_file(String Sname)
 {
 byte[] name;
@@ -473,13 +446,13 @@ public byte[] open_file(String Sname)
 	sent[0] = (byte) (rozmiar/256);
 	sent[1] = (byte) (rozmiar%256);
 	
-	int i = rozmiar%Sector.size;
+	int i = rozmiar%disk.getSector_size();
 	int j = 2;
 	int jap = buffer[get_entry_first_position_in_block(entry)+9];
 	while (jap!=0)
 	{
 		buffer = get_DATA_sector(jap);
-		for (int k=0; k<Sector.size; k++)
+		for (int k=0; k<disk.getSector_size(); k++)
 		{
 			sent[j] = buffer[k];
 			j++;
@@ -496,22 +469,17 @@ public byte[] open_file(String Sname)
 	    }
 	 
    }
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	
 	return sent;
 }
 
+//-----------------------------------------------------------
+
+// wewnetrzne metody przetwarzania
 
 
-// dopisuje na koncu pliku, jesli potrzeba powieksza lancuch jap, zwieksza rozmiar we wpisie
+// dopisuje na koncu pliku o nazwie name, dane data o dlugosci size, jesli potrzeba powieksza lancuch jap, zwieksza rozmiar we wpisie
 // zwraca falsz jezeli nie ma wolnej jap, lub zla nazwa podana
 private boolean save_file(byte[] name, byte[] data, int size )
 {
@@ -526,7 +494,7 @@ private boolean save_file(byte[] name, byte[] data, int size )
 	int first_jap = buffer[get_entry_first_position_in_block(entry)+9];
 	int jap = first_jap;
 	
-	int free_in = Sector.size - rozmiar%Sector.size;
+	int free_in = disk.getSector_size() - rozmiar%disk.getSector_size();
 	
 	int jap_before=-1;
 	
@@ -553,7 +521,7 @@ private boolean save_file(byte[] name, byte[] data, int size )
 	}
 	else 
 	{
-		if(free_in==Sector.size)
+		if(free_in==disk.getSector_size())
 		{
 			if(numer_pierwszej_wolnej_jap == 0) return false;
 			FAT_chain(jap_before, numer_pierwszej_wolnej_jap);
@@ -576,7 +544,7 @@ private boolean save_file(byte[] name, byte[] data, int size )
 	
 	
 	buffer=this.get_DATA_sector(jap_before);
-	for ( int k=rozmiar%Sector.size; k<Sector.size; k++)
+	for ( int k=rozmiar%disk.getSector_size(); k<disk.getSector_size(); k++)
 	{
 		buffer[k] = data[size-i];
 		i--;
@@ -613,80 +581,73 @@ private boolean save_file(byte[] name, byte[] data, int size )
 //odczytaj z tablicy FAT kolejny adres JAP
 private int FAT_next_JAP(int JAP_number)
 {
-	return  get_FAT_sector_of_JAP(JAP_number)[(JAP_number-1)%Sector.size];
+	return  get_FAT_sector_of_JAP(JAP_number)[(JAP_number-1)%disk.getSector_size()];
 }
 
 // wpisz do tablicy FAT do JAP kolejny adres JAP
 private void  FAT_chain(int JAP_number, int next_JAP)
 {
-	byte[] buffer = this.get_FAT_sector_of_JAP(JAP_number);
-	buffer[(JAP_number-1)%Sector.size] = (byte) next_JAP;
-	this.save_FAT_sector_of_JAP(buffer, JAP_number);
+	byte[] buffer = get_FAT_sector_of_JAP(JAP_number);
+	buffer[(JAP_number-1)%disk.getSector_size()] = (byte) next_JAP;
+	save_FAT_sector_of_JAP(buffer, JAP_number);
 }
 
-// 
-//podaje sie dopuszczalna liczbe pozycji katalogu i przekazuje dysk na ktorym zainstalowany jest system
-//ustawia boot_sector
-public FAT8()
-{
-    int liczba_pozycji_katalogu = 20;
-	 dlugosc_wpisu_katalogowego = 16;
-	
-	this.disk= new Disk(32,64);
-	this.ROOT_space=liczba_pozycji_katalogu;
-	this.FAT_sectors = (int) Math.ceil(disk.getSector_number()*1/Sector.size);
-	this.ROOT_sectors = (int) Math.ceil(ROOT_space*dlugosc_wpisu_katalogowego/Sector.size);
-	this.DATA_sectors = disk.getSector_number() - ROOT_sectors - FAT_sectors - 1;
-	this.JAP_offset = 1+FAT_sectors+ROOT_sectors;
-	
-	this.write_buffer = new byte[Sector.size];
-	this.write_name = new byte[8];
-	this.write_name = null;
-	
-	this.numer_pierwszej_wolnej_jap = 1;
-	
-	Sector boot = new Sector();
+
+//-------------------------------------
+
+
+//konstruktor i metody pomocnicze
+
+private void init_boot_sector(){
+	byte[] boot = new byte[disk.getSector_size()];
 	//instrukcja skoku do programu ladujacego
 	for (int i=0x0;i<=0x7;i++)
 	{
-		boot.setSpace((byte)0, i);
+		boot[i]=(byte)0;
 	}
 	// nazwa systemu
-	boot.setSpace((byte) 'F', 8);
-	boot.setSpace( (byte) 'A', 9);
-	boot.setSpace( (byte) 'T', 0xA);
-	boot.setSpace((byte) '8', 0xB);
+	boot[8]=(byte) 'F';
+	boot[9]=(byte) 'A';
+	boot[0xA]=(byte) 'T';
+	boot[0xB]=(byte) '8';
+	
 	for(int i=0xC;i<=0xF;i++)
 	{
-		boot.setSpace((byte) ' ', i);
+		boot[i]=(byte)' ';
 	}
+	
+
 	// LITTLE ENDIAN
 	// rozmiar sektora 
-	boot.setSpace(  (byte) (Sector.size%256), 0x10);
-	boot.setSpace(  (byte) (Sector.size/256), 0x11);
+	boot[0x10] = (byte) (disk.getSector_size()%256) ;
+	boot[0x11] = (byte)  (disk.getSector_size()/256);		
 	// ile sektorow na JAP
-	boot.setSpace(  (byte) 1, 0x12);
+	boot[0x12] = (byte) 1;	
 	// liczba sektorow zarezerwowanych na poczatku dysku
-	boot.setSpace( (byte) (( FAT_sectors+ROOT_sectors+1)%256), 0x13);
-	boot.setSpace( (byte) (( FAT_sectors+ROOT_sectors+1)/256), 0x14);
+	boot[0x13] = (byte)   ((FAT_sectors+ROOT_sectors+1)%256);	
+	boot[0x14] = (byte)  ((FAT_sectors+ROOT_sectors+1)/256);	
 	// Pojemnosc katalogu glownego(pozycji)
-	boot.setSpace(  (byte) (this.ROOT_space%256), 0x15);
-	boot.setSpace(  (byte) (this.ROOT_space/256), 0x16);
+	boot[0x15] = (byte)   (this.ROOT_space%256);
+	boot[0x16] = (byte)   (this.ROOT_space/256);	
 	//calkowita liczba sektorow
-	boot.setSpace(  (byte) (disk.getSector_number()%256), 0x17);
-	boot.setSpace(  (byte) (disk.getSector_number()/256), 0x18);
+	boot[0x17] = (byte)   (disk.getSector_number()%256);	
+	boot[0x18] = (byte)   (disk.getSector_number()/256);	
 	//wielkosc FAT (w sektorach)
-	boot.setSpace(  (byte) (this.ROOT_sectors%256), 0x19);
-	boot.setSpace(  (byte) (this.ROOT_sectors/256), 0x1A);
+	boot[0x19] = (byte)   (this.ROOT_sectors%256);	
+	boot[0x1A] = (byte)   (this.ROOT_sectors/256);	
 	
 	
-	disk.get_sector(1, boot.getSpace());
+	
+	disk.get_sector(1, boot);
+}
+
+private void init_FAT_sectors(){
 	byte[] buffer;
 	int k=2;
 	for(int i=1; i<= FAT_sectors;i++)
 	{
 	   buffer =  this.get_FAT_sector(i);
-	   for (int j=0;j<Sector.size;j++)
+	   for (int j=0;j<disk.getSector_size();j++)
 	   {
 		   if(k<disk.getSector_number()-this.JAP_offset)
 		   {
@@ -699,11 +660,42 @@ public FAT8()
 	   }
 	   this.save_FAT_sector(i, buffer);
 	}
-	
 }
 
 
+//podaje sie dopuszczalna liczbe pozycji katalogu i przekazuje dysk na ktorym zainstalowany jest system
+//ustawia boot_sector
+public FAT8(){
+    int liczba_pozycji_katalogu = 20;
+	dlugosc_wpisu_katalogowego = 16;
+	
+	disk= new Disk(32,64);
+	ROOT_space=liczba_pozycji_katalogu;
+	FAT_sectors = (int) Math.ceil(disk.getSector_number()*1/disk.getSector_size());
+	ROOT_sectors = (int) Math.ceil(ROOT_space*dlugosc_wpisu_katalogowego/disk.getSector_size());
+	DATA_sectors = disk.getSector_number() - ROOT_sectors - FAT_sectors - 1;
+	JAP_offset = 1+FAT_sectors+ROOT_sectors;
+	
+	write_buffer = new byte[disk.getSector_size()];
+	write_name = new byte[8];
+	write_name = null;
+	
+	numer_pierwszej_wolnej_jap = 1;
+	
+	init_boot_sector();
+	init_FAT_sectors();
+	
+	
+}
 
+//----------------------------------
+
+
+//metody pomocniczne aby mozna bylo podawac nazwy w stringach
+//trzeba podac nazwe w funkcji konwertujacej
+
+
+//fixes length to 8
 public byte[] convert_name (String name)
 {
 	
@@ -737,7 +729,9 @@ public byte[] convert_text (String name)
 	return ret;
 }
 
+//----------------------------------
 
+// przechwytywanie dysku bezposrednio lub drukowanie konkretnych obszarow
 public Disk get_disk()
 {
 	return this.disk;
@@ -774,5 +768,5 @@ public boolean print_File_ROOT(String Sname, boolean charmode)
     disk.print_sector(this.convert_ROOT_nr_to_sector_nr(this.convert_entry_to_ROOT_nr(entry)), charmode);
     return true;
 }
-
+// ---------------------------------------------------------
 }
