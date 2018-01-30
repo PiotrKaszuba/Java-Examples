@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+
+
+<android.support.percent.PercentRelativeLayout
+
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="4dp"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp"
+    android:paddingTop="4dp"
+    tools:context="com.example.piotr.smartreaction.StartActivity"
+    android:background="#0efb59">
+
+    <Button
+        app:layout_widthPercent="60%"
+        app:layout_heightPercent="15%"
+        app:layout_marginTopPercent="10%"
+        android:layout_height="wrap_content"
+        android:text="Go!"
+        android:id="@+id/button2"
+        android:layout_below="@+id/textView5"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentEnd="false" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Ready?"
+        android:id="@+id/textView4"
+        android:layout_alignParentTop="true"
+        app:layout_marginTopPercent="10%"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentRight="false"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Set.."
+        app:layout_marginTopPercent="10%"
+        android:id="@+id/textView5"
+        android:layout_below="@+id/textView4"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="0dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test Finish"
+        android:id="@+id/finish_test_button"
+        android:layout_above="@+id/textView7"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="10dp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="After click cross the line in the next 10 sec"
+        android:id="@+id/textView6"
+        android:layout_above="@+id/finish_test_button"
+        android:layout_alignRight="@+id/finish_test_button"
+        android:layout_alignEnd="@+id/finish_test_button"
+        android:visibility="invisible" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Small"
+        android:id="@+id/textView7"
+        android:layout_alignParentBottom="true"
+        android:phoneNumber="false"
+        android:gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Reaction time: start to collect data"
+        android:id="@+id/reaction_text"
+        android:layout_below="@+id/button2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Run time: finish to collect data"
+        android:id="@+id/run_text"
+        android:layout_below="@+id/reaction_text"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:visibility="invisible" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Mid time: cross to collect data"
+        android:id="@+id/mid_text"
+        android:layout_below="@+id/run_text"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:visibility="invisible" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test Mid gate"
+        android:id="@+id/mid_test_button"
+        android:layout_alignTop="@+id/finish_test_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:visibility="invisible" />
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toStartOf="@+id/finish_test_button"
+        android:layout_below="@+id/mid_text"
+        android:layout_alignRight="@+id/finish_test_button"
+        android:layout_alignEnd="@+id/finish_test_button"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reaction"
+            android:id="@+id/only_reaction_button"
+            android:layout_gravity="left"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Finish"
+            android:id="@+id/finish_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:checked="true" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Midgate"
+            android:id="@+id/midgate_button"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:checked="false" />
+    </RadioGroup>
+
+
+</android.support.percent.PercentRelativeLayout>
